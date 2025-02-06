@@ -12,3 +12,9 @@ cjson_test: $(cjosn) $(log) test/cjson_test.c
 	-$(CC) $(CFLAGS) $^ -o $@ -Ithirdparty
 #	-./$@
 #	-rm $@
+
+app_common := app/app_common.h app/app_common.c $(log)
+app_common_test: $(app_common) test/app_common_test.c
+	-$(CC) $(CFLAGS) $^ -o $@ -Iapp -Ithirdparty
+	-./$@
+	-rm $@
