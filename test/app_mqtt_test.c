@@ -1,17 +1,14 @@
+#define _GNU_SOURCE
 #include <unistd.h>
-#include <sys/syscall.h>
 #include "log/log.h"
 #include "app_mqtt.h"
-
-pid_t gettid() {
-return syscall(SYS_gettid);
-}
 
 int recv_cb(char *datas, int datas_len)
 {
     log_warn("the tid = %d, datas: %s, len = %d", gettid(), datas, datas_len);
     return 0;
 }
+
 
 int main(int argc, char *argv[]) 
 {

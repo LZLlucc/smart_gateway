@@ -1,5 +1,6 @@
 CC := gcc
-CFLAGS := -Wall -g
+CFLAGS := -Wall -g -O0
+VALGRIND := valgrind --tool=memcheck --leak-check=full
 
 log := thirdparty/log/log.h thirdparty/log/log.c
 log_test: $(log) test/log_test.c
@@ -35,4 +36,11 @@ app_mqtt := app/app_mqtt.h app/app_mqtt.c
 app_mqtt_test: $(log) $(app_mqtt) test/app_mqtt_test.c
 	-$(CC) $(CFLAGS) $^ -o $@ -Iapp -Ithirdparty -lpaho-mqtt3c
 	-./$@
+	-rm $@
+
+app_pool := app/app_pool.c app/app_pool.h 
+app_pool_test : $(log) $(app_pool) test/app_pool_test.c
+	-$(CC) $(CFLAGS) $^ -o $@ -Iapp -Ithirdparty
+#	-./$@
+	- $(VALGRIND) ./$@
 	-rm $@
