@@ -17,7 +17,8 @@ int main(int argc, char **argv)
 {
     app_pool_init(5);
     for (int i = 0; i < 10; i++) {
-        task_t *task = (task_t *)malloc(sizeof(task_t));
+        // task_t *task = (task_t *)malloc(sizeof(task_t));
+        task_t *task = (task_t *)calloc(1, sizeof(task_t));
         task->func = task_fun;
         char *str = "hello";
         char *a = (char *)malloc(10);

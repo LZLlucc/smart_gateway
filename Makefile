@@ -11,8 +11,8 @@ log_test: $(log) test/log_test.c
 cjosn := thirdparty/cJSON/cJSON.h thirdparty/cJSON/cJSON.c
 cjson_test: $(cjosn) $(log) test/cjson_test.c
 	-$(CC) $(CFLAGS) $^ -o $@ -Ithirdparty
-#	-./$@
-#	-rm $@
+	-./$@
+	-rm $@
 
 app_common := app/app_common.h app/app_common.c 
 app_common_test: $(log) $(app_common) test/app_common_test.c
@@ -40,6 +40,13 @@ app_mqtt_test: $(log) $(app_mqtt) test/app_mqtt_test.c
 
 app_pool := app/app_pool.c app/app_pool.h 
 app_pool_test : $(log) $(app_pool) test/app_pool_test.c
+	-$(CC) $(CFLAGS) $^ -o $@ -Iapp -Ithirdparty
+#	-./$@
+	- $(VALGRIND) ./$@
+	-rm $@
+
+app_buffer := app/app_buffer.c app/app_buffer.h
+app_buffer_test : $(log) $(app_buffer) test/app_buffer_test.c
 	-$(CC) $(CFLAGS) $^ -o $@ -Iapp -Ithirdparty
 #	-./$@
 	- $(VALGRIND) ./$@
