@@ -1,6 +1,6 @@
 CC := gcc
 CFLAGS := -Wall -g -O0
-VALGRIND := valgrind --tool=memcheck --leak-check=full
+VALGRIND := valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all
 
 log := thirdparty/log/log.h thirdparty/log/log.c
 log_test: $(log) test/log_test.c
@@ -8,8 +8,8 @@ log_test: $(log) test/log_test.c
 	-./$@
 	-rm $@
 
-cjosn := thirdparty/cJSON/cJSON.h thirdparty/cJSON/cJSON.c
-cjson_test: $(cjosn) $(log) test/cjson_test.c
+cjson := thirdparty/cJSON/cJSON.h thirdparty/cJSON/cJSON.c
+cjson_test: $(cjson) $(log) test/cjson_test.c
 	-$(CC) $(CFLAGS) $^ -o $@ -Ithirdparty
 	-./$@
 	-rm $@
@@ -21,7 +21,7 @@ app_common_test: $(log) $(app_common) test/app_common_test.c
 	-rm $@
 
 app_message := app/app_message.h app/app_message.c  
-app_message_test: $(log) $(cjosn) $(app_common)  $(app_message) \
+app_message_test: $(log) $(cjson) $(app_common)  $(app_message) \
 					test/app_message_test.c
 	-$(CC) $(CFLAGS) $^ -o $@ -Iapp -Ithirdparty
 	-./$@
@@ -51,3 +51,12 @@ app_buffer_test : $(log) $(app_buffer) test/app_buffer_test.c
 #	-./$@
 	- $(VALGRIND) ./$@
 	-rm $@
+
+app_device := app/app_device.c app/app_device.h
+app_device_test : test/app_device_test.c $(app_device) $(log) $(app_buffer) \
+				$(app_message) $(app_common) $(cjson) $(app_pool) \
+				$(app_mqtt) $(app_message) 
+	-$(CC) $(CFLAGS) $^ -o $@ -Iapp -Ithirdparty -lpaho-mqtt3c
+	-./$@
+	- $(VALGRIND) ./$@
+#	-rm $@

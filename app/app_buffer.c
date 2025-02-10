@@ -110,6 +110,7 @@ int app_buffer_write(buffer_t *buffer, const char *datas, int datas_len)
     /* 解锁 */
     pthread_mutex_unlock(&buffer->write_lock);
 
+    // printf("write data: %s\n", datas_len, w_buffer->ptr);
     log_debug("end to write buffer");
 
     return 0;
@@ -118,7 +119,7 @@ int app_buffer_write(buffer_t *buffer, const char *datas, int datas_len)
 /* 切换缓冲区 */
 static void switch_buffer(buffer_t *buffer) 
 {
-    log_debug("switch buffer");
+    // log_debug("switch buffer");
     pthread_mutex_lock(&buffer->write_lock);
     int temp = buffer->read_index;
     buffer->read_index = buffer->write_index;
@@ -152,6 +153,7 @@ int app_buffer_read(buffer_t *buffer, char *datas_buffer, int datas_size)
     sub_buffer_t *r_buffer = buffer->sub_buffer[buffer->read_index];
     if (!r_buffer->len) {
         switch_buffer(buffer);
+        log_debug("switch buffer");
         r_buffer = buffer->sub_buffer[buffer->read_index];
         if (!r_buffer->len) {
             log_error("no data to read");
