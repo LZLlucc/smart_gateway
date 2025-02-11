@@ -6,13 +6,13 @@
 /* 子缓冲区 */
 typedef struct {
     unsigned char *ptr; /* 内存指针-指向头部 */
-    int size;  /* 缓冲区大小 */
-    int len;   /* 数据长度 */
+    int size;           /* 缓冲区大小 */
+    int len;            /* 数据长度 */
 } sub_buffer_t;
 
 /* 缓冲区 */
 typedef struct {
-    sub_buffer_t *sub_buffer[2];     /* 子缓冲区-W 和 R */
+    sub_buffer_t *sub_buffer[2];    /* 子缓冲区-W 和 R */
     int read_index;                 /* 读索引 */
     int write_index;                /* 写索引 */
     pthread_mutex_t read_lock;      /* 读锁 */

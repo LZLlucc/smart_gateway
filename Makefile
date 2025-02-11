@@ -53,10 +53,12 @@ app_buffer_test : $(log) $(app_buffer) test/app_buffer_test.c
 	-rm $@
 
 app_device := app/app_device.c app/app_device.h
+app_bt := app/app_bt.c app/app_bt.h
+app_serial := app/app_serial.c app/app_serial.h
 app_device_test : test/app_device_test.c $(app_device) $(log) $(app_buffer) \
 				$(app_message) $(app_common) $(cjson) $(app_pool) \
-				$(app_mqtt) $(app_message) 
+				$(app_mqtt) $(app_message) $(app_bt) $(app_serial)
 	-$(CC) $(CFLAGS) $^ -o $@ -Iapp -Ithirdparty -lpaho-mqtt3c
 	-./$@
-	- $(VALGRIND) ./$@
-#	-rm $@
+#	- $(VALGRIND) ./$@
+	-rm $@

@@ -7,15 +7,20 @@
 /* 初始化子缓冲区 */
 static sub_buffer_t *sub_buffer_init(int size) 
 {
+    if (size <= 0) {
+        log_error("size is invalid");
+        return NULL;
+    }
+
     sub_buffer_t *sub_buffer = (sub_buffer_t *)malloc(sizeof(sub_buffer_t));
     if (sub_buffer == NULL) {
-        perror("malloc");
+        perror("sub_buffer malloc");
         return NULL;
     }
 
     sub_buffer->ptr = (unsigned char *)malloc(size);
     if (sub_buffer->ptr == NULL) {
-        perror("malloc");
+        perror("sub_buffer_ptr malloc");
         free(sub_buffer);
         return NULL;
     }
@@ -46,6 +51,7 @@ buffer_t *app_buffer_init(int size)
     buffer->read_index = 0;
     buffer->write_index = 1;
 
+    /* 初始化锁 */
     pthread_mutex_init(&buffer->read_lock, NULL);
     pthread_mutex_init(&buffer->write_lock, NULL);
 

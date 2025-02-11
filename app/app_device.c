@@ -38,6 +38,7 @@ device_t *app_device_init(char *filename)
     device->last_write_time = 0;
     device->interval_time = 200;
 
+    log_debug("init device succ");
     return device;
 }
 
@@ -82,25 +83,27 @@ static void *read_thread_func(void *argv)
             return NULL;
         }
 
-        /* 读取数据后的处理 - 转为字符数组 */
+        /* 读取数据后的处理 - 蓝牙数据转为字符数组 */
         if (len > 0 && device->post_read) {
             len = device->post_read(read_buf, len);
             if (-1 == len) {
                 log_error("post_read failed");
                 return NULL;
             }
-        }
+        log_debug("len = %d", len);
+        log_debug("rrrrrrrr = %.*s", len, read_buf);
 
-        /* 将数据写入上行缓冲区 */
-        if (len > 0) {
-            log_debug("write to up buffer");
-            app_buffer_write(device->up_buffer, read_buf, len);
+            /* 将数据写入上行缓冲区 */
+            if (len > 0) {
+                log_debug("write to up buffer");
+                app_buffer_write(device->up_buffer, read_buf, len);
 
-            /* 将数据交给线程池处理 */
-            task_t *task = (task_t *)malloc(sizeof(task_t));
-            task->func = send_task_func;
-            task->arg = NULL;
-            app_pool_register_task(task);
+                /* 将数据交给线程池处理 */
+                task_t *task = (task_t *)malloc(sizeof(task_t));
+                task->func = send_task_func;
+                task->arg = NULL;
+                app_pool_register_task(task);
+            }
         }
     }
     
@@ -116,9 +119,9 @@ static int write_task_func(void *argv)
     int len = app_buffer_read(device->down_buffer, datas_buf, sizeof(datas_buf));
     if (-1 == len) {
         log_error("app_buffer_read failed");
-        return -1;
+        return -1;  
     }
-
+    
     /* 将字符组消息转为蓝牙格式的数据 */
     if (len > 0 && device->pre_write) {
         len = device->pre_write(datas_buf, len);
@@ -126,27 +129,26 @@ static int write_task_func(void *argv)
             log_error("pre_write failed");
             return -1;
         }
-    }
-    
-    /* 写入设备文件 */
-    if (len > 0) {
-        /* 如果间隔时间小于200ms，等待 */
-        long distance_time = get_current_time() - device->last_write_time;
-        if (distance_time < device->interval_time) {
-            usleep((device->interval_time - distance_time) * 1000);
-        }
 
-        ssize_t w_len = write(device->fd, datas_buf, len);
-        log_debug("datas = %s",datas_buf);
-        if (w_len < 0) {
-            log_error("write failed");
-            return -1;
-        }
-        log_debug("write device succ, the datas : %.*s", w_len, datas_buf);
-        device->last_write_time = get_current_time();
-        return 0;
-    }
+        /* 写入设备文件 */
+        if (len > 0) {
+            /* 如果间隔时间小于200ms，等待 */
+            long distance_time = get_current_time() - device->last_write_time;
+            if (distance_time < device->interval_time) {
+                usleep((device->interval_time - distance_time) * 1000);
+            }
 
+            ssize_t w_len = write(device->fd, datas_buf, len);
+            log_debug("datas = %s",datas_buf);
+            if (w_len < 0) {
+                log_error("write failed");
+                return -1;
+            }
+            log_debug("write device succ, the datas : %.*s", w_len, datas_buf);
+            device->last_write_time = get_current_time();
+            return 0;
+        }
+    }
     return -1;
 }
 
