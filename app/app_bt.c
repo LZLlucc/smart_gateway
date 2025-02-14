@@ -11,24 +11,29 @@ static char fix_header[2] = {0xf1, 0xdd};
 
 static int init_bt(device_t *device)
 {
-    /* 初始化串口 -9600 非阻塞 */
+    /* 初始化串口 -9600 阻塞 */
     app_serial_init(device);
+
+    app_serial_set_block(device, 0);            /* 非阻塞 */
+    tcflush(device->fd, TCIOFLUSH);
 
     /* 判断蓝牙是否可用 可用则设置属性 */
     if (0 == app_bt_test(device)) {
         app_bt_rename(device, "mesh");
         app_bt_set_baudrate(device, BT_115200);
-        app_bt_set_netid(device, "1369");
-        app_bt_set_maddr(device, "0000");
+        // app_bt_set_netid(device, "1369");
+        // app_bt_set_maddr(device, "0001");
         app_bt_reset(device);
 
         /* 等待蓝牙复位 */
-        sleep(1);
+        sleep(2);
     }
 
     /* 改变串口波特率 */
-    app_serial_set_braudrate(device, BT_115200);
+    app_serial_set_braudrate(device, BR_115200);
     tcflush(device->fd, TCIOFLUSH);
+    app_bt_set_netid(device, "1369");
+    app_bt_set_maddr(device, "0005");
 
     /* 判断蓝牙是否可用 */
     if (app_bt_test(device)) {
@@ -36,11 +41,12 @@ static int init_bt(device_t *device)
         return -1;
     }
 
+    log_debug("55555555");
     /* 将串口改为非阻塞 */
     app_serial_set_block(device, 1);
     tcflush(device->fd, TCIOFLUSH);
 
-    log_debug("init bt succ");
+    log_debug("bt init succ");
 
     return 0;
 }
@@ -173,7 +179,8 @@ static int wait_ack(device_t *device)
 
     /* 读取串口数据 */
     char buf[4] = {0};
-    read(device->fd, buf, 4);
+    read(device->fd, buf, sizeof(buf));
+    log_debug("11111111111111: %s", buf);
     if (memcmp(buf, "OK\r\n", 4) == 0)
         return 0;
     else

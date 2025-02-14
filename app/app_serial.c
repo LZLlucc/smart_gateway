@@ -6,7 +6,6 @@
 int app_serial_init(device_t *dev)
 {
     app_serial_set_braudrate(dev, BR_9600);  /* 因为蓝牙模块的初始波特率为9600 */
-    app_serial_set_block(dev, 0);       /* 非阻塞 */
 
     app_serial_set_parity(dev, PARITY_NONE);
     app_serial_set_stopbit(dev, SB_1);

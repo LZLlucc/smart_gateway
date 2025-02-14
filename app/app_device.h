@@ -19,7 +19,7 @@ typedef struct {
 
 device_t *app_device_init(char *filename);
 int app_device_start();
-void app_device_close();
+void app_device_destroy();
 
 
 #endif /* APP_DEVICE_H_ */
