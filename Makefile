@@ -1,58 +1,78 @@
-CC:=$(CROSS_COMPILE)gcc
+CC := gcc
+CFLAGS := -Wall -g -O0
+VALGRIND := valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all
 
-BOARD_DIR := $(shell pwd)/
-PEER := root@192.168.55.73
+log := thirdparty/log/log.h thirdparty/log/log.c
+log_test: $(log) test/log_test.c
+	-$(CC) $^ -o $@ -Ithirdparty
+	-./$@
+	-rm $@
 
-CFLAGS += -Wall -Wextra
+cjson := thirdparty/cJSON/cJSON.h thirdparty/cJSON/cJSON.c
+cjson_test: $(cjson) $(log) test/cjson_test.c
+	-$(CC) $(CFLAGS) $^ -o $@ -Ithirdparty
+	-./$@
+	-rm $@
 
-CFLAGS += -I.
-CFLAGS += -Ithirdparty
-CFLAGS += -Iapp
-CFLAGS += -Idaemon
-CFLAGS += -Iota
+app_common := app/app_common.h app/app_common.c 
+app_common_test: $(log) $(app_common) test/app_common_test.c
+	-$(CC) $(CFLAGS) $^ -o $@ -Iapp -Ithirdparty
+	-./$@
+	-rm $@
 
-ifdef SYSROOT
-	CFLAGS += --sysroot=$(SYSROOT)
-endif
+app_message := app/app_message.h app/app_message.c  
+app_message_test: $(log) $(cjson) $(app_common)  $(app_message) \
+					test/app_message_test.c
+	-$(CC) $(CFLAGS) $^ -o $@ -Iapp -Ithirdparty
+	-./$@
+	-rm $@
 
-LDLIBS += -lpaho-mqtt3c
-LDLIBS += -lcurl
-LDLIBS += -lcrypto
+mqtt_test : test/mqtt_test.c
+	-$(CC) $(CFLAGS) $^ -o $@  -lpaho-mqtt3c
+	-./$@
+	-rm $@
 
-SRC += $(shell find app -name "*.c"	-type f)
-SRC += $(shell find daemon -name "*.c"	-type f)
-SRC += $(shell find ota -name "*.c"	-type f)
-SRC += $(shell find thirdparty -name "*.c"	-type f)
+app_mqtt := app/app_mqtt.h app/app_mqtt.c
+app_mqtt_test: $(log) $(app_mqtt) test/app_mqtt_test.c
+	-$(CC) $(CFLAGS) $^ -o $@ -Iapp -Ithirdparty -lpaho-mqtt3c
+	-./$@
+	-rm $@
 
-OBJ := $(SRC:.c=.o)
+app_pool := app/app_pool.c app/app_pool.h 
+app_pool_test : $(log) $(app_pool) test/app_pool_test.c
+	-$(CC) $(CFLAGS) $^ -o $@ -Iapp -Ithirdparty
+#	-./$@
+	- $(VALGRIND) ./$@
+	-rm $@
 
-TARGET := gateway
+app_buffer := app/app_buffer.c app/app_buffer.h
+app_buffer_test : $(log) $(app_buffer) test/app_buffer_test.c
+	-$(CC) $(CFLAGS) $^ -o $@ -Iapp -Ithirdparty
+#	-./$@
+	- $(VALGRIND) ./$@
+	-rm $@
 
-.PHONY: all, clean
+app_device := app/app_device.c app/app_device.h
+app_bt := app/app_bt.c app/app_bt.h
+app_serial := app/app_serial.c app/app_serial.h
+app_device_test : test/app_device_test.c $(app_device) $(log) $(app_buffer) \
+				$(app_message) $(app_common) $(cjson) $(app_pool) \
+				$(app_mqtt) $(app_message) $(app_bt) $(app_serial)
+	-$(CC) $(CFLAGS) $^ -o $@ -Iapp -Ithirdparty -lpaho-mqtt3c
+	-./$@
+#	- $(VALGRIND) ./$@
+	-rm $@
 
-all: $(TARGET)
+ota_http := ota/ota_http.c ota/ota_http.h
+ota_http_test : test/ota_http_test.c $(ota_http) $(log) 
+	-$(CC) $(CFLAGS) $^ -o $@ -Iota -Ithirdparty -lcurl -lcrypto
+	-./$@
+	-rm $@
 
-clean:
-	@-rm -f $(TARGET) $(OBJ) main.o
-
-$(TARGET): main.o $(OBJ)
-	@-$(CC) $(CFLAGS) $^ -o $@ $(LDLIBS)
-
-cross-compile:
-	@CROSS_COMPILE=$(BOARD_DIR)/toolchain/bin/arm-linux-gnueabihf- \
-	 SYSROOT=$(BOARD_DIR)/sysroot \
-	 make -j16
-	@scp -O $(TARGET) $(PEER):/usr/bin/$(TARGET)
-
-#cross-init:
-#	@scp -O init/S99gateway $(PEER):/etc/init.d/S99gateway
-
-%.o: %.c
-	@-$(CC) $(CFLAGS) -c $^ -o $@
-
-%_test: test/%_test.o $(OBJ)
-	@-$(CC) $(CFLAGS) $^ -o $@ $(LDLIBS)
-	@-./$@
-	@-rm $@ $^
-
-# gcc -Ixxx   为gcc指定include目录
+ota_version := ota/ota_version.c ota/ota_version.h
+ota_version_test : test/ota_version_test.c $(ota_version) $(log) $(cjson) \
+					$(ota_http)
+	-$(CC) $(CFLAGS) $^ -o $@ -Iota -Ithirdparty -lcurl -lcrypto
+	-./$@
+	- $(VALGRIND) ./$@
+	-rm $@
